@@ -1,0 +1,184 @@
+import re
+
+class RequestParser:
+    def __init__(self, request_string):
+        self.request_string = request_string
+        self.errors = []
+# se encarga de analizar y validar la solicitud de http,las cabeceras y el cuerpo de la solicitud y registra si hay algun error.
+
+    def parse_request(self):
+        self.errors = []
+        self.parse_http_method()
+        self.parse
+        _url()
+        self.parse_headers()
+        self.parse_body()
+# llama a los metodos de analisis y si no hay errores instancia una controladora y llama a este metodo para procesar la solicitud.
+
+        if not self.errors:
+            controladora = Controladora()
+            controladora.procesar_request(self.request_string)
+        else:
+            for error in self.errors:
+                print(error)
+
+    def parse_http_method(self):
+        match = re.match(r'^(GET|POST|PUT|DELETE)\s', self.request_string)
+        if not match:
+            self.errors.append('No cumple con un método HTTP válido.')
+
+    def parse_url(self):
+        match = re.search(r'(?P<url>https?://[^\s/$.?#].[^\s]*)', self.request_string)
+        if not match:
+            self.errors.append('No contiene una URL válida.')
+        else:
+            url = match.group('url')
+            if ':' not in url:
+                self.errors.append('La URL no dispone de un puerto para la conexión con el servidor.')
+
+
+class Controladora:
+    def __init__(self):
+        self.bd = BD()
+# procesa la solicitud http y tiene metodos get,post,put y delete y dependiendo de solicitud llama a la clase BD para usar sus metodos.
+    def procesar_request(self, request_string):
+        tipo, cabecera, body = request_string.split(",")
+        
+        if tipo == 'Get':
+            self.leer_usuarios()
+        elif tipo == 'Post':
+            if body:
+                self.crear_usuario(cabecera, body)
+            else:
+                self.encontrar_usuario(cabecera)
+        elif tipo == 'Put':
+            if body:
+                self.editar_usuario(cabecera, body)
+            else:
+                print('Falta el parámetro de ID para editar el usuario.')
+        elif tipo == 'Delete':
+            if body:
+                self.eliminar_usuario(cabecera, body)
+            else:
+                print('Falta el parámetro de ID para eliminar el usuario.')
+        else:
+            print('Tipo de solicitud no válido.')
+
+    def leer_usuarios(self):
+        print('--- Leer usuarios existentes ---')
+        self.bd.mostrar_usuarios()
+
+    def encontrar_usuario(self, cabecera):
+        print('--- Encontrar un usuario ---')
+        
+
+    def crear_usuario(self, cabecera, body):
+        print('--- Crear un usuario ---')
+        campos = body.split(",")
+        if len(campos) < 3:
+            print('Faltan campos en el cuerpo para crear el usuario.')
+            return
+        
+        user, pwd, nombre = campos[:3]
+        id = str(self.bd.obtener_nuevo_id())  # Generar ID automáticamente
+        self.bd.agregar_usuario(id, user, pwd, nombre)
+        self.bd.mostrar_usuarios()
+
+    def editar_usuario(self, cabecera, body):
+        print('--- Editar la información de un usuario existente ---')
+        
+
+    def eliminar_usuario(self, cabecera, body):
+        print('--- Eliminar un usuario ---')
+        
+
+
+class BD:
+    def __init__(self):
+        self.usuarios = []
+        self.contador_id = 1  
+# es una base de datos simulada bidimensional para  agregar usuarios, eliminar usuarios y mostrar usuarios.
+    def obtener_nuevo_id(self):
+        nuevo_id = self.contador_id
+        self.contador_id += 1
+        return nuevo_id
+
+    def agregar_usuario(self, id, user, pwd, nombre):
+        self.usuarios.append([id, user, pwd, nombre])
+
+    def eliminar_usuario(self, id):
+        for usuario in self.usuarios:
+            if usuario[0] == id:
+                self.usuarios.remove(usuario)
+                break
+
+    def mostrar_usuarios(self):
+        print('Usuarios:')
+        for usuario in self.usuarios:
+            print(f'ID: {usuario[0]}, Usuario: {usuario[1]}, Nombre: {usuario[3]}')
+
+
+class Main:
+    def __init__(self):
+        self.bd = BD()
+# el main se encarga de mostrar el menu y llama a los metodos correspondientes de la clase controladora.
+    def mostrar_menu(self):
+        print('1. Leer usuarios (Get)')
+        print('2. Encontrar un usuario (Get)')
+        print('3. Crear un usuario (Post)')
+        print('4. Editar la información de un usuario (Put)')
+        print('5. Eliminar un usuario (Delete)')
+        print('6. Salir')
+
+    def ejecutar(self):
+        while True:
+            self.mostrar_menu()
+            opcion = input('Ingrese una opción: ')
+
+            if opcion == '1':
+                self.leer_usuarios()
+            elif opcion == '2':
+                self.encontrar_usuario()
+            elif opcion == '3':
+                self.crear_usuario()
+            elif opcion == '4':
+                self.editar_usuario()
+            elif opcion == '5':
+                self.eliminar_usuario()
+            elif opcion == '6':
+                break
+            else:
+                print('Opción inválida. Intente nuevamente.')
+
+    def leer_usuarios(self):
+        controladora = Controladora()
+        controladora.procesar_request('Get,,')
+
+    def encontrar_usuario(self):
+        cabecera = input('Ingrese la cabecera: ')
+        controladora = Controladora()
+        controladora.procesar_request(f'Get,{cabecera},')
+
+    def crear_usuario(self):
+        user = input('Ingrese el nombre de usuario: ')
+        pwd = input('Ingrese la contraseña: ')
+        nombre = input('Ingrese el nombre: ')
+
+        controladora = Controladora()
+        controladora.procesar_request(f'Post,,{user},{pwd},{nombre}')
+
+    def editar_usuario(self):
+        cabecera = input('Ingrese la cabecera: ')
+        body = input('Ingrese el cuerpo: ')
+        controladora = Controladora()
+        controladora.procesar_request(f'Put,{cabecera},{body}')
+
+    def eliminar_usuario(self):
+        cabecera = input('Ingrese la cabecera: ')
+        body = input('Ingrese el cuerpo: ')
+        controladora = Controladora()
+        controladora.procesar_request(f'Delete,{cabecera},{body}')
+
+
+main = Main()
+main.ejecutar()
